@@ -11,7 +11,7 @@ import org.trysol.Trysol.Auth.entity.Role;
 import java.util.List;
 @Component
 @RequiredArgsConstructor
-public class DataIntializer implements CommandLineRunner {
+public class DataInitializer implements CommandLineRunner {
     private final RoleRepository rolerepository;
     @Override
     public void run(String... args) throws Exception {
