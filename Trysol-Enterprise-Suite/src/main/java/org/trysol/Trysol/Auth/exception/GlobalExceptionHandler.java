@@ -50,4 +50,30 @@ public class GlobalExceptionHandler {
         error.put("message",ex.getMessage());
         return new ResponseEntity<>(error,HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(ApiException.class)
+    public  ResponseEntity<?>handleApiException(ApiException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "timestamp", LocalDateTime.now(),
+                        "error", "Bad Request",
+                        "message", ex.getMessage()
+                ));
+
+    }
+    @ExceptionHandler(RestPasswordException.class)
+    public ResponseEntity<?> handleRestPasswordException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                        "timestamp", LocalDateTime.now(),
+                        "error", "Internal Server Error",
+                        "message", ex.getMessage()
+                ));
+    }
+
+
+
+
+
+
+
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.trysol.Trysol.Auth.Dto.*;
 import org.trysol.Trysol.Auth.Repository.UserRepository;
 import org.trysol.Trysol.Auth.entity.User;
+import org.trysol.Trysol.Auth.exception.ApiException;
 import org.trysol.Trysol.Auth.service.EmailService;
 import org.trysol.Trysol.Auth.service.UserService;
 import org.trysol.Trysol.security.JwtUtil;
@@ -59,14 +60,12 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestParam String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ApiException("User not found"));
 
         String token = UUID.randomUUID().toString();
         user.setResetToken(token);
         user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
         userRepository.save(user);
-
-        // For testing: return the reset link in response
         String resetLink = "http://localhost:5173/reset-password?token=" + token;
         return ResponseEntity.ok(Map.of("resetLink", resetLink));
     }
@@ -74,16 +73,13 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPassword request) {
-        // Find user by token
         User user = userRepository.findByResetToken(request.getToken())
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new ApiException("Invalid token"));
 
-        // Check token expiry
+
         if (user.getTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Token expired");
         }
-
-        // Update password
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setResetToken(null);
         user.setTokenExpiry(null);
