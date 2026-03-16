@@ -1,0 +1,34 @@
+package org.trysol.Trysol.Auth.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class EmailService {
+
+
+
+        private final JavaMailSender mailSender;
+
+        public String createResetLink( String token) {
+
+            String resetLink =
+                    "http://localhost:5173/reset-password?token=" + token;
+            return resetLink;
+        }
+            public void sendResetEmail(String toEmail, String token) {
+                String resetLink = createResetLink(token);
+
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo(toEmail);
+                message.setSubject("Password Reset Request");
+                message.setText("Click the link to reset your password: " + resetLink);
+
+                mailSender.send(message);
+
+        }
+    }
+

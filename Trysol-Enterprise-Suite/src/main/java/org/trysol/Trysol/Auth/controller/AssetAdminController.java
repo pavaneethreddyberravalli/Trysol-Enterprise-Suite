@@ -8,9 +8,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/asset")
 public class AssetAdminController {
+
     @GetMapping("/assets")
     @PreAuthorize("hasRole('ASSET_ADMIN')")
     public String assets(){
         return "Asset Allocation";
     }
+
+
+
+
 }

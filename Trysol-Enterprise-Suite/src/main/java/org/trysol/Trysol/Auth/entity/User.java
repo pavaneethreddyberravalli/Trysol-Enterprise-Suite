@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -29,6 +31,11 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "token_expiry")
+    private LocalDateTime tokenExpiry;
 
 }
 
