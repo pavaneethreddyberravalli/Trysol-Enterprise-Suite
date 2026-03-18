@@ -45,7 +45,17 @@ public class AuthController {
                     )
             );
         SecurityContextHolder.getContext().setAuthentication(auth);
-       String token = jwtUtil.generateToken(request.getUsernameOrEmail());
+       //String token = jwtUtil.generateToken(request.getUsernameOrEmail());
+        User user = userRepository.findByUsernameOrEmail(
+                request.getUsernameOrEmail(),
+                request.getUsernameOrEmail()
+        ).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Generate token including role
+        String token = jwtUtil.generateToken(
+                user.getUsername(),
+                user.getRole().getName()
+        );
 //        String username = auth.getName();
 //        String token = jwtUtil.generateToken(username);
         return ResponseEntity.ok(new AuthResponse(token, "Bearer"));
@@ -80,6 +90,9 @@ public class AuthController {
         if (user.getTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Token expired");
         }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("Passwords do not match");
+        }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setResetToken(null);
         user.setTokenExpiry(null);
@@ -87,5 +100,5 @@ public class AuthController {
 
         return ResponseEntity.ok("Password reset successful");
     }
-    }
+}
 

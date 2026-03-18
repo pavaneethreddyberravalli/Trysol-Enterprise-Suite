@@ -69,6 +69,15 @@ public class GlobalExceptionHandler {
                         "message", ex.getMessage()
                 ));
     }
+    @ExceptionHandler(ConfirmPassword.class)
+    public ResponseEntity<?>handleConfirmPassword(Exception ex){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                        "timestamp",LocalDateTime.now(),
+                        "error", "Internal Server Error",
+                        "message",ex.getMessage()
+                ));
+    }
 
 
 

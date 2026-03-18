@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,6 +18,8 @@ import org.trysol.Trysol.Auth.service.CustomUserDetailService;
 import org.trysol.Trysol.security.JwtFilter;
 
     @Configuration
+    @EnableMethodSecurity(prePostEnabled = true)
+
     public class SecurityConfig {
 
         @Autowired
@@ -40,9 +44,14 @@ import org.trysol.Trysol.security.JwtFilter;
                             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers( "/api/auth/**").permitAll()
+                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-resources/**",
+                                    "/webjars/**"
+                            ).permitAll()
                             .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                            .requestMatchers("/api/finance/download").hasRole("ADMIN")
+                            .requestMatchers("/api/finance/create").hasAnyRole("ADMIN","FINANCE")
                             .requestMatchers("/api/hr/**").hasRole("HR")
-                            .requestMatchers("/api/finance/**").hasRole("FINANCE")
+                            .requestMatchers("/api/finance/**").hasAnyRole("ADMIN","FINANCE")
                             .requestMatchers("/api/sales/**").hasRole("SALES")
                             .requestMatchers("/api/trainer/**").hasRole("TRAINER")
                             .requestMatchers("/api/assets/**").hasRole("ASSET_ADMIN")

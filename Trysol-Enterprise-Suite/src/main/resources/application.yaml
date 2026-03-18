@@ -35,3 +35,11 @@ spring:
             enable: true
           ssl:
             trust: smtp.gmail.com
+  springdoc:
+    api-docs:
+      path: /v3/api-docs
+    swagger-ui:
+      path: /swagger-ui.html
+      operationsSorter: alpha
+      deepLinking: true
+      displayRequestDuration: true
