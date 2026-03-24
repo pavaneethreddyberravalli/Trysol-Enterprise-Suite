@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.trysol.Trysol.Auth.exception.InvalidStateException;
 
 import java.time.LocalDate;
 
@@ -16,6 +17,8 @@ public class FinanceRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Integer serialNo;
+    private String employeeState;
+    private String companyState;
     private String gstMonth;
     private String companyName;
     private String gstNumber;
@@ -53,21 +56,29 @@ public class FinanceRecord {
         if (workedDays != null && leaves != null) {
             this.totalDays = workedDays + leaves;
         }
-
-        // GST Calculation (9% + 9%)
-        if (billAmountExclTax != null) {
-            this.cgst = billAmountExclTax * 0.09;
-            this.sgst = billAmountExclTax * 0.09;
-            this.igst = 0.0;
-
-            this.billAmountInclTax = billAmountExclTax + cgst + sgst;
+        if (companyState == null || employeeState == null) {
+            throw new InvalidStateException("Company state and employee state must not be null");
         }
 
+        if (billAmountExclTax != null) {
+            double taxRate = 0.18; // 18% GST
+            if (companyState != null && employeeState != null &&
+                    companyState.equalsIgnoreCase(employeeState)) {
+                // Intra-state: CGST + SGST
+                this.cgst = billAmountExclTax * (taxRate / 2);
+                this.sgst = billAmountExclTax * (taxRate / 2);
+                this.igst = 0.0;
+            } else {
+                // Inter-state: IGST only
+                this.cgst = 0.0;
+                this.sgst = 0.0;
+                this.igst = billAmountExclTax * taxRate;
+            }
+            this.billAmountInclTax = billAmountExclTax + cgst + sgst + igst;
+        }
         // Margin
         if (billAmountExclTax != null && salaryPaid != null) {
             this.margin = billAmountExclTax - salaryPaid;
-
-
         }
     }
 

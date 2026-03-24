@@ -100,5 +100,9 @@ public class AuthController {
 
         return ResponseEntity.ok("Password reset successful");
     }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok("Logout successful");
+    }
 }
 
