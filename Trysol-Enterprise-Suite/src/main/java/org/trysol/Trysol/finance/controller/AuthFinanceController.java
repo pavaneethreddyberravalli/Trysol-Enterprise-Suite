@@ -29,4 +29,5 @@ public class AuthFinanceController {
     public ResponseEntity<?> create(@RequestBody FinanceRecord record) {
         return ResponseEntity.ok(financeService.saveRecord(record));
     }
+
 }

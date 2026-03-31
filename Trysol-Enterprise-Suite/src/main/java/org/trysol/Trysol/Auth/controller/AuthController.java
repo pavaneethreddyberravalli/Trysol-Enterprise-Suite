@@ -1,5 +1,6 @@
 package org.trysol.Trysol.Auth.controller;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -67,18 +68,39 @@ public class AuthController {
     }
 
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApiException("User not found"));
+//    @PostMapping("/forgot-password")
+//    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new ApiException("User not found"));
+//
+//        String token = UUID.randomUUID().toString();
+//        user.setResetToken(token);
+//        user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
+//        userRepository.save(user);
+//        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+//        return ResponseEntity.ok(Map.of("resetLink", resetLink));
+//    }
+@Transactional
+@PostMapping("/forgot-pssword")
+public ResponseEntity<?> forgotPassword(@RequestBody String email) {
 
-        String token = UUID.randomUUID().toString();
-        user.setResetToken(token);
-        user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
-        userRepository.save(user);
-        String resetLink = "http://localhost:5173/reset-password?token=" + token;
-        return ResponseEntity.ok(Map.of("resetLink", resetLink));
-    }
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ApiException("User not found"));
+
+    String token = UUID.randomUUID().toString();
+
+    user.setResetToken(token);
+    user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
+
+    System.out.println("TOKEN: " + token);
+
+    userRepository.saveAndFlush(user);
+
+    return ResponseEntity.ok(Map.of(
+            "message", "Reset link generated",
+            "token", token
+    ));
+}
 
 
     @PostMapping("/reset-password")

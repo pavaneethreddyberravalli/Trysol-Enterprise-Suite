@@ -1,19 +1,19 @@
 package org.trysol.Trysol.finance.service;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.trysol.Trysol.finance.Repository.InvoiceRepository;
 import org.trysol.Trysol.finance.entity.Invoice;
+import org.trysol.Trysol.finance.exception.ExcelOperationException;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 
 @Service
 public class InvoiceService {
@@ -21,66 +21,254 @@ public class InvoiceService {
 
     @Autowired
     public InvoiceRepository invoiceRepository;
+
     private static final String FILE_PATH = "invoices.xlsx";
 
 
     public Invoice saveInvoice(Invoice invoice) {
         return invoiceRepository.save(invoice);
     }
+    ////////////////////////////////////////////////////////////////////////////
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
 
-    public void appendInvoiceToExcel(Invoice invoice) {
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 12);
 
-        try {
-            Workbook workbook;
-            Sheet sheet;
-            File file = new File(FILE_PATH);
-            if (file.exists()) {
-                // Open existing workbook
-                FileInputStream fis = new FileInputStream(file);
-                workbook = new XSSFWorkbook(fis);
-                sheet = workbook.getSheetAt(0);
-                fis.close();
-            } else {
-                // Create new workbook
-                workbook = new XSSFWorkbook();
-                sheet = workbook.createSheet("Invoices");
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-                // Create header row
-                Field[] fields = Invoice.class.getDeclaredFields();
-                Row headerRow = sheet.createRow(0);
-                for (int i = 0; i < fields.length; i++) {
-                    headerRow.createCell(i).setCellValue(fields[i].getName());
-                }
-            }
+        style.setAlignment(HorizontalAlignment.CENTER);
 
-            Field[] fields = Invoice.class.getDeclaredFields();
-            int rowIdx = sheet.getLastRowNum() + 1;
-            Row row = sheet.createRow(rowIdx);
-
-            for (int colIdx = 0; colIdx < fields.length; colIdx++) {
-                fields[colIdx].setAccessible(true);
-                Object value = fields[colIdx].get(invoice);
-                row.createCell(colIdx).setCellValue(value != null ? value.toString() : "");
-            }
-
-            for (int i = 0; i < fields.length; i++) {
-                sheet.autoSizeColumn(i);
-            }
-
-            FileOutputStream fos = new FileOutputStream(FILE_PATH);
-            workbook.write(fos);
-            fos.close();
-            workbook.close();
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error while updating Excel", e);
-        }
+        return style;
     }
+    private CellStyle createDataStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
+        return style;
+    }
+    private CellStyle createCurrencyStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+
+        DataFormat format = workbook.createDataFormat();
+        style.setDataFormat(format.getFormat("₹#,##0.00"));
+
+        return style;
+    }
+    private CellStyle createDateStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+
+        DataFormat format = workbook.createDataFormat();
+        style.setDataFormat(format.getFormat("dd-MM-yyyy"));
+
+        return style;
+    }
+    ///////////////////////////////////////////
+    public void appendInvoiceToExcel(Invoice invoice) {
+//        try {
+//            Workbook workbook;
+//            Sheet sheet;
+//            File file = new File(FILE_PATH);
+//            if (file.exists()) {
+//                // Open existing workbook
+//                FileInputStream fis = new FileInputStream(file);
+//                workbook = new XSSFWorkbook(fis);
+//                sheet = workbook.getSheetAt(0);
+//                fis.close();
+//            }else {
+//                // Create new workbook
+//                workbook = new XSSFWorkbook();
+//                sheet = workbook.createSheet("Invoices");
+//
+//                // Create header row
+////                Field[] fields = Invoice.class.getDeclaredFields();
+////                Row headerRow = sheet.createRow(0);
+//                Field[] fields = Invoice.class.getDeclaredFields();
+//                Row headerRow = sheet.createRow(0);
+//
+//                CellStyle headerStyle = createHeaderStyle(workbook);
+//
+//                for (int i = 0; i < fields.length; i++) {
+//                    Cell cell = headerRow.createCell(i);
+//                    cell.setCellValue(fields[i].getName());
+//                    cell.setCellStyle(headerStyle);
+//                }
+//                for (int i = 0; i < fields.length; i++) {
+//                    headerRow.createCell(i).setCellValue(fields[i].getName());
+//                }
+//            }
+//            /// ////
+//            Field[] fields = Invoice.class.getDeclaredFields();
+//            int rowIdx = sheet.getLastRowNum() + 1;
+//            Row row = sheet.createRow(rowIdx);
+//
+//            for (int colIdx = 0; colIdx < fields.length; colIdx++) {
+//                fields[colIdx].setAccessible(true);
+//                Object value = fields[colIdx].get(invoice);
+//                //row.createCell(colIdx).setCellValue(value != null ? value.toString() : "");
+//                CellStyle dataStyle = createDataStyle(workbook);
+//                CellStyle currencyStyle = createCurrencyStyle(workbook);
+//                CellStyle dateStyle = createDateStyle(workbook);
+//
+//                for (int colIdx = 0; colIdx < fields.length; colIdx++) {
+//                    fields[colIdx].setAccessible(true);
+//                    Object value = fields[colIdx].get(invoice);
+//
+//                    Cell cell = row.createCell(colIdx);
+//
+//                    if (value == null) {
+//                        cell.setCellValue("");
+//                        cell.setCellStyle(dataStyle);
+//
+//                    } else if (value instanceof Double) {
+//                        cell.setCellValue((Double) value);
+//
+//                        // Apply currency style for amount fields
+//                        String fieldName = fields[colIdx].getName();
+//                        if (fieldName.equalsIgnoreCase("billRate") ||
+//                                fieldName.equalsIgnoreCase("grandTotal")) {
+//                            cell.setCellStyle(currencyStyle);
+//                        } else {
+//                            cell.setCellStyle(dataStyle);
+//                        }
+//
+//                    } else if (value instanceof LocalDate) {
+//                        cell.setCellValue(java.sql.Date.valueOf((LocalDate) value));
+//                        cell.setCellStyle(dateStyle);
+//
+//                    } else {
+//                        cell.setCellValue(value.toString());
+//                        cell.setCellStyle(dataStyle);
+//                    }
+//                }
+//            }
+//            sheet.setAutoFilter(
+//                    new CellRangeAddress(0, 0, 0, fields.length - 1)
+//            );
+//            for (int i = 0; i < fields.length; i++) {
+//                sheet.autoSizeColumn(i);
+//            }
+//
+//            FileOutputStream fos = new FileOutputStream(FILE_PATH);
+//            workbook.write(fos);
+//            fos.close();
+//            workbook.close();
+//
+//        } catch (Exception e) {
+//            throw new ExcelOperationException("Error while updating Excel", e);
+//        }
+//    }
+
+            try {
+                Workbook workbook;
+                Sheet sheet;
+                File file = new File(FILE_PATH);
+
+                if (file.exists()) {
+                    // Open existing workbook
+                    FileInputStream fis = new FileInputStream(file);
+                    workbook = new XSSFWorkbook(fis);
+                    sheet = workbook.getSheetAt(0);
+                    fis.close();
+
+                    // Apply header style again in case it was missing
+                    Row headerRow = sheet.getRow(0);
+                    if (headerRow != null) {
+                        CellStyle headerStyle = createHeaderStyle(workbook);
+                        for (Cell cell : headerRow) {
+                            cell.setCellStyle(headerStyle);
+                        }
+                    }
+
+                } else {
+                    // Create new workbook and sheet
+                    workbook = new XSSFWorkbook();
+                    sheet = workbook.createSheet("Invoices");
+
+                    // Create header row with style
+                    Row headerRow = sheet.createRow(0);
+                    Field[] fields = Invoice.class.getDeclaredFields();
+                    CellStyle headerStyle = createHeaderStyle(workbook);
+
+                    for (int i = 0; i < fields.length; i++) {
+                        Cell cell = headerRow.createCell(i);
+                        cell.setCellValue(fields[i].getName());
+                        cell.setCellStyle(headerStyle);
+                    }
+                }
+
+                // Create styles for data
+                CellStyle dataStyle = createDataStyle(workbook);
+                CellStyle currencyStyle = createCurrencyStyle(workbook);
+                CellStyle dateStyle = createDateStyle(workbook);
+
+                // Append new invoice row
+                Field[] fields = Invoice.class.getDeclaredFields();
+                int rowIdx = sheet.getLastRowNum() + 1;
+                Row row = sheet.createRow(rowIdx);
+
+                for (int colIdx = 0; colIdx < fields.length; colIdx++) {
+                    fields[colIdx].setAccessible(true);
+                    Object value = fields[colIdx].get(invoice);
+
+                    Cell cell = row.createCell(colIdx);
+
+                    if (value == null) {
+                        cell.setCellValue("");
+                        cell.setCellStyle(dataStyle);
+
+                    } else if (value instanceof Double) {
+                        cell.setCellValue((Double) value);
+
+                        // Apply currency style for amount fields
+                        String fieldName = fields[colIdx].getName();
+                        if (fieldName.equalsIgnoreCase("billRate") ||
+                                fieldName.equalsIgnoreCase("grandTotal")) {
+                            cell.setCellStyle(currencyStyle);
+                        } else {
+                            cell.setCellStyle(dataStyle);
+                        }
+
+                    } else if (value instanceof LocalDate) {
+                        cell.setCellValue(java.sql.Date.valueOf((LocalDate) value));
+                        cell.setCellStyle(dateStyle);
+
+                    } else {
+                        cell.setCellValue(value.toString());
+                        cell.setCellStyle(dataStyle);
+                    }
+                }
+
+                // Auto-size columns
+                for (int i = 0; i < fields.length; i++) {
+                    sheet.autoSizeColumn(i);
+                }
+
+                // Apply auto-filter on header
+                sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, fields.length - 1));
+
+                // Write to file
+                FileOutputStream fos = new FileOutputStream(FILE_PATH);
+                workbook.write(fos);
+                fos.close();
+                workbook.close();
+
+            } catch (Exception e) {
+                throw new ExcelOperationException("Error while updating Excel", e);
+            }
+        }
 
     public ByteArrayInputStream getExcelStream() throws IOException {
         Path path = Path.of(FILE_PATH);
         if (!Files.exists(path)) {
-            throw new IOException("Excel file not found!");
+            throw new ExcelOperationException("Excel file not found!");
         }
         return new ByteArrayInputStream(Files.readAllBytes(path));
     }
@@ -129,7 +317,7 @@ public class InvoiceService {
             return found;
 
         } catch (Exception e) {
-            throw new RuntimeException("Error updating Excel", e);
+            throw new ExcelOperationException("Error updating Excel", e);
         }
     }
 
@@ -148,7 +336,6 @@ public class InvoiceService {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
-
                 // invoiceNo column = 1
                 Cell invoiceCell = row.getCell(1);
                 if (invoiceCell != null &&
@@ -160,7 +347,6 @@ public class InvoiceService {
                     break;
                 }
             }
-
             if (found) {
                 FileOutputStream fos = new FileOutputStream(FILE_PATH);
                 workbook.write(fos);
@@ -171,7 +357,7 @@ public class InvoiceService {
             return found;
 
         } catch (Exception e) {
-            throw new RuntimeException("Error deleting invoice from Excel", e);
+            throw new ExcelOperationException("Error deleting invoice from Excel", e);
         }
     }
 

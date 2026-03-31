@@ -24,7 +24,6 @@ public class InvoiceController {
         service.appendInvoiceToExcel(invoice); // append to Excel
         return ResponseEntity.ok("Invoice saved and Excel updated!");
     }
-
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> downloadExcel() throws IOException {
         ByteArrayInputStream in = service.getExcelStream();
@@ -35,12 +34,10 @@ public class InvoiceController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(new InputStreamResource(in));
     }
-
     @PutMapping("/edit/{invoiceNo}")
     public ResponseEntity<String> editInvoice(
             @PathVariable("invoiceNo") String invoiceNo,
             @RequestBody Invoice invoice) {
-
         boolean updated = service.updateInvoiceInExcel(invoiceNo, invoice);
 
         if (updated) return ResponseEntity.ok("Invoice updated!");
@@ -52,8 +49,9 @@ public class InvoiceController {
         boolean deleted = service.deleteInvoiceFromExcel(invoiceNo);
         if (deleted) return ResponseEntity.ok("Invoice deleted!");
         else return ResponseEntity.status(404).body("Invoice not found");
+
     }
-    
+
 }
 
 
