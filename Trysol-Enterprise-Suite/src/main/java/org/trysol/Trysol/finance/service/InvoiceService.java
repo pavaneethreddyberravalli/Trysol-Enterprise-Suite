@@ -68,7 +68,7 @@ public class InvoiceService {
 
         return style;
     }
-    public void appendInvoiceToExcel(Invoice invoice) {
+        public void appendInvoiceToExcel(Invoice invoice) {
 
             try {
                 Workbook workbook;
@@ -88,7 +88,7 @@ public class InvoiceService {
                         Cell firstCell = headerRow.getCell(0);
                         //
                         if (firstCell == null || !"S.No".equalsIgnoreCase(firstCell.getStringCellValue())) {
-                            // Add S.No header
+
                             Cell snCell = headerRow.createCell(0);
                             snCell.setCellValue("S.No");
                         }
@@ -179,18 +179,12 @@ public class InvoiceService {
                         cell.setCellStyle(dataStyle);
                     }
                 }
-
-
-
-
                 // Auto-size columns
                 for (int i = 0; i <= fields.length; i++) {
                     sheet.autoSizeColumn(i);
                 }
-
                 // Apply auto-filter on header
                 sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, fields.length - 1));
-
                 // Write to file
                 FileOutputStream fos = new FileOutputStream(FILE_PATH);
                 workbook.write(fos);
