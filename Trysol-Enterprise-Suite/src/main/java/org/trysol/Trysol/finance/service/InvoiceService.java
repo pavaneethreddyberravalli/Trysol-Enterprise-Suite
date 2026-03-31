@@ -28,7 +28,7 @@ public class InvoiceService {
     public Invoice saveInvoice(Invoice invoice) {
         return invoiceRepository.save(invoice);
     }
-    ////////////////////////////////////////////////////////////////////////////
+
     private CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
 
@@ -37,8 +37,6 @@ public class InvoiceService {
         font.setFontHeightInPoints((short) 12);
 
         style.setFont(font);
-        style.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
         style.setAlignment(HorizontalAlignment.CENTER);
 
@@ -70,101 +68,7 @@ public class InvoiceService {
 
         return style;
     }
-    ///////////////////////////////////////////
     public void appendInvoiceToExcel(Invoice invoice) {
-//        try {
-//            Workbook workbook;
-//            Sheet sheet;
-//            File file = new File(FILE_PATH);
-//            if (file.exists()) {
-//                // Open existing workbook
-//                FileInputStream fis = new FileInputStream(file);
-//                workbook = new XSSFWorkbook(fis);
-//                sheet = workbook.getSheetAt(0);
-//                fis.close();
-//            }else {
-//                // Create new workbook
-//                workbook = new XSSFWorkbook();
-//                sheet = workbook.createSheet("Invoices");
-//
-//                // Create header row
-////                Field[] fields = Invoice.class.getDeclaredFields();
-////                Row headerRow = sheet.createRow(0);
-//                Field[] fields = Invoice.class.getDeclaredFields();
-//                Row headerRow = sheet.createRow(0);
-//
-//                CellStyle headerStyle = createHeaderStyle(workbook);
-//
-//                for (int i = 0; i < fields.length; i++) {
-//                    Cell cell = headerRow.createCell(i);
-//                    cell.setCellValue(fields[i].getName());
-//                    cell.setCellStyle(headerStyle);
-//                }
-//                for (int i = 0; i < fields.length; i++) {
-//                    headerRow.createCell(i).setCellValue(fields[i].getName());
-//                }
-//            }
-//            /// ////
-//            Field[] fields = Invoice.class.getDeclaredFields();
-//            int rowIdx = sheet.getLastRowNum() + 1;
-//            Row row = sheet.createRow(rowIdx);
-//
-//            for (int colIdx = 0; colIdx < fields.length; colIdx++) {
-//                fields[colIdx].setAccessible(true);
-//                Object value = fields[colIdx].get(invoice);
-//                //row.createCell(colIdx).setCellValue(value != null ? value.toString() : "");
-//                CellStyle dataStyle = createDataStyle(workbook);
-//                CellStyle currencyStyle = createCurrencyStyle(workbook);
-//                CellStyle dateStyle = createDateStyle(workbook);
-//
-//                for (int colIdx = 0; colIdx < fields.length; colIdx++) {
-//                    fields[colIdx].setAccessible(true);
-//                    Object value = fields[colIdx].get(invoice);
-//
-//                    Cell cell = row.createCell(colIdx);
-//
-//                    if (value == null) {
-//                        cell.setCellValue("");
-//                        cell.setCellStyle(dataStyle);
-//
-//                    } else if (value instanceof Double) {
-//                        cell.setCellValue((Double) value);
-//
-//                        // Apply currency style for amount fields
-//                        String fieldName = fields[colIdx].getName();
-//                        if (fieldName.equalsIgnoreCase("billRate") ||
-//                                fieldName.equalsIgnoreCase("grandTotal")) {
-//                            cell.setCellStyle(currencyStyle);
-//                        } else {
-//                            cell.setCellStyle(dataStyle);
-//                        }
-//
-//                    } else if (value instanceof LocalDate) {
-//                        cell.setCellValue(java.sql.Date.valueOf((LocalDate) value));
-//                        cell.setCellStyle(dateStyle);
-//
-//                    } else {
-//                        cell.setCellValue(value.toString());
-//                        cell.setCellStyle(dataStyle);
-//                    }
-//                }
-//            }
-//            sheet.setAutoFilter(
-//                    new CellRangeAddress(0, 0, 0, fields.length - 1)
-//            );
-//            for (int i = 0; i < fields.length; i++) {
-//                sheet.autoSizeColumn(i);
-//            }
-//
-//            FileOutputStream fos = new FileOutputStream(FILE_PATH);
-//            workbook.write(fos);
-//            fos.close();
-//            workbook.close();
-//
-//        } catch (Exception e) {
-//            throw new ExcelOperationException("Error while updating Excel", e);
-//        }
-//    }
 
             try {
                 Workbook workbook;
@@ -172,14 +76,33 @@ public class InvoiceService {
                 File file = new File(FILE_PATH);
 
                 if (file.exists()) {
+
                     // Open existing workbook
                     FileInputStream fis = new FileInputStream(file);
                     workbook = new XSSFWorkbook(fis);
                     sheet = workbook.getSheetAt(0);
                     fis.close();
+                    Row headerRow = sheet.getRow(0);
+
+                    if (headerRow != null) {
+                        Cell firstCell = headerRow.getCell(0);
+                        //
+                        if (firstCell == null || !"S.No".equalsIgnoreCase(firstCell.getStringCellValue())) {
+                            // Add S.No header
+                            Cell snCell = headerRow.createCell(0);
+                            snCell.setCellValue("S.No");
+                        }
+
+                        // Apply header style
+                        CellStyle headerStyle = createHeaderStyle(workbook);
+                        for (Cell cell : headerRow) {
+                            cell.setCellStyle(headerStyle);
+                        }
+                    }
+
 
                     // Apply header style again in case it was missing
-                    Row headerRow = sheet.getRow(0);
+                   // Row headerRow = sheet.getRow(0);
                     if (headerRow != null) {
                         CellStyle headerStyle = createHeaderStyle(workbook);
                         for (Cell cell : headerRow) {
@@ -197,8 +120,13 @@ public class InvoiceService {
                     Field[] fields = Invoice.class.getDeclaredFields();
                     CellStyle headerStyle = createHeaderStyle(workbook);
 
+                    Cell snCell = headerRow.createCell(0);
+                    snCell.setCellValue("S.No");
+                    snCell.setCellStyle(headerStyle);
+
+//
                     for (int i = 0; i < fields.length; i++) {
-                        Cell cell = headerRow.createCell(i);
+                        Cell cell = headerRow.createCell(i+1);
                         cell.setCellValue(fields[i].getName());
                         cell.setCellStyle(headerStyle);
                     }
@@ -214,11 +142,17 @@ public class InvoiceService {
                 int rowIdx = sheet.getLastRowNum() + 1;
                 Row row = sheet.createRow(rowIdx);
 
+
+                Cell snCell = row.createCell(0);
+                snCell.setCellValue(rowIdx); // because row 0 is header
+                snCell.setCellStyle(dataStyle);
+
+
                 for (int colIdx = 0; colIdx < fields.length; colIdx++) {
                     fields[colIdx].setAccessible(true);
                     Object value = fields[colIdx].get(invoice);
-
-                    Cell cell = row.createCell(colIdx);
+//
+                    Cell cell = row.createCell(colIdx+1);
 
                     if (value == null) {
                         cell.setCellValue("");
@@ -246,8 +180,11 @@ public class InvoiceService {
                     }
                 }
 
+
+
+
                 // Auto-size columns
-                for (int i = 0; i < fields.length; i++) {
+                for (int i = 0; i <= fields.length; i++) {
                     sheet.autoSizeColumn(i);
                 }
 
@@ -264,6 +201,7 @@ public class InvoiceService {
                 throw new ExcelOperationException("Error while updating Excel", e);
             }
         }
+
 
     public ByteArrayInputStream getExcelStream() throws IOException {
         Path path = Path.of(FILE_PATH);
@@ -396,6 +334,218 @@ public class InvoiceService {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//append
+
+//try {
+
+
+//            Workbook workbook;
+//            Sheet sheet;
+//            File file = new File(FILE_PATH);
+//            if (file.exists()) {
+//                // Open existing workbook
+//                FileInputStream fis = new FileInputStream(file);
+//                workbook = new XSSFWorkbook(fis);
+//                sheet = workbook.getSheetAt(0);
+//                fis.close();
+//            }else {
+//                // Create new workbook
+//                workbook = new XSSFWorkbook();
+//                sheet = workbook.createSheet("Invoices");
+//
+//                // Create header row
+////                Field[] fields = Invoice.class.getDeclaredFields();
+////                Row headerRow = sheet.createRow(0);
+//                Field[] fields = Invoice.class.getDeclaredFields();
+//                Row headerRow = sheet.createRow(0);
+//
+//                CellStyle headerStyle = createHeaderStyle(workbook);
+//
+//                for (int i = 0; i < fields.length; i++) {
+//                    Cell cell = headerRow.createCell(i);
+//                    cell.setCellValue(fields[i].getName());
+//                    cell.setCellStyle(headerStyle);
+//                }
+//                for (int i = 0; i < fields.length; i++) {
+//                    headerRow.createCell(i).setCellValue(fields[i].getName());
+//                }
+//            }
+//            /// ////
+//            Field[] fields = Invoice.class.getDeclaredFields();
+//            int rowIdx = sheet.getLastRowNum() + 1;
+//            Row row = sheet.createRow(rowIdx);
+//
+//            for (int colIdx = 0; colIdx < fields.length; colIdx++) {
+//                fields[colIdx].setAccessible(true);
+//                Object value = fields[colIdx].get(invoice);
+//                //row.createCell(colIdx).setCellValue(value != null ? value.toString() : "");
+//                CellStyle dataStyle = createDataStyle(workbook);
+//                CellStyle currencyStyle = createCurrencyStyle(workbook);
+//                CellStyle dateStyle = createDateStyle(workbook);
+//
+//                for (int colIdx = 0; colIdx < fields.length; colIdx++) {
+//                    fields[colIdx].setAccessible(true);
+//                    Object value = fields[colIdx].get(invoice);
+//
+//                    Cell cell = row.createCell(colIdx);
+//
+//                    if (value == null) {
+//                        cell.setCellValue("");
+//                        cell.setCellStyle(dataStyle);
+//
+//                    } else if (value instanceof Double) {
+//                        cell.setCellValue((Double) value);
+//
+//                        // Apply currency style for amount fields
+//                        String fieldName = fields[colIdx].getName();
+//                        if (fieldName.equalsIgnoreCase("billRate") ||
+//                                fieldName.equalsIgnoreCase("grandTotal")) {
+//                            cell.setCellStyle(currencyStyle);
+//                        } else {
+//                            cell.setCellStyle(dataStyle);
+//                        }
+//
+//                    } else if (value instanceof LocalDate) {
+//                        cell.setCellValue(java.sql.Date.valueOf((LocalDate) value));
+//                        cell.setCellStyle(dateStyle);
+//
+//                    } else {
+//                        cell.setCellValue(value.toString());
+//                        cell.setCellStyle(dataStyle);
+//                    }
+//                }
+//            }
+//            sheet.setAutoFilter(
+//                    new CellRangeAddress(0, 0, 0, fields.length - 1)
+//            );
+//            for (int i = 0; i < fields.length; i++) {
+//                sheet.autoSizeColumn(i);
+//            }
+//
+//            FileOutputStream fos = new FileOutputStream(FILE_PATH);
+//            workbook.write(fos);
+//            fos.close();
+//            workbook.close();
+//
+//        } catch (Exception e) {
+//            throw new ExcelOperationException("Error while updating Excel", e);
+//        }
+//    }
 
 
 
