@@ -18,7 +18,7 @@ public class InvoiceController {
     @Autowired
     public InvoiceService service;
 
-    @PostMapping("/create and update")
+    @PostMapping("/create-update")
     public ResponseEntity<String> createInvoice(@RequestBody Invoice invoice) {
         service.saveInvoice(invoice);
         service.appendInvoiceToExcel(invoice); // append to Excel

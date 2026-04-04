@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.UUID;
 
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -31,31 +30,38 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final  UserService userService;
+    private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
+
+
+
+
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
         Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsernameOrEmail(),
-                            request.getPassword()
-                    )
-            );
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsernameOrEmail(),
+                        request.getPassword()
+                )
+        );
         SecurityContextHolder.getContext().setAuthentication(auth);
-       //String token = jwtUtil.generateToken(request.getUsernameOrEmail());
+        //String token = jwtUtil.generateToken(request.getUsernameOrEmail());
         User user = userRepository.findByUsernameOrEmail(
                 request.getUsernameOrEmail(),
                 request.getUsernameOrEmail()
         ).orElseThrow(() -> new RuntimeException("User not found"));
 
         // Generate token including role
+        // Generate token including role
+        String roleName = (user.getRole() != null) ? user.getRole().getName() : "ROLE_USER";
         String token = jwtUtil.generateToken(
                 user.getUsername(),
-                user.getRole().getName()
+                roleName
         );
 //        String username = auth.getName();
 //        String token = jwtUtil.generateToken(username);
@@ -63,12 +69,12 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRequest request){
+    public ResponseEntity<?> registerUser(@Valid @RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.createUser(request));
     }
 
 
-//    @PostMapping("/forgot-password")
+    //    @PostMapping("/forgot-password")
 //    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
 //        User user = userRepository.findByEmail(email)
 //                .orElseThrow(() -> new ApiException("User not found"));
@@ -80,27 +86,25 @@ public class AuthController {
 //        String resetLink = "http://localhost:5173/reset-password?token=" + token;
 //        return ResponseEntity.ok(Map.of("resetLink", resetLink));
 //    }
-@Transactional
-@PostMapping("/forgot-pssword")
-public ResponseEntity<?> forgotPassword(@RequestBody String email) {
+    @Transactional
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPassword request) {
 
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new ApiException("User not found"));
+        String email = request.getEmail(); // get email from DTO
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found"));
 
-    String token = UUID.randomUUID().toString();
+        String token = UUID.randomUUID().toString();
+        user.setResetToken(token);
+        user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
 
-    user.setResetToken(token);
-    user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
+        userRepository.saveAndFlush(user);
 
-    System.out.println("TOKEN: " + token);
-
-    userRepository.saveAndFlush(user);
-
-    return ResponseEntity.ok(Map.of(
-            "message", "Reset link generated",
-            "token", token
-    ));
-}
+        return ResponseEntity.ok(Map.of(
+                "message", "Reset link generated",
+                "token", token
+        ));
+    }
 
 
     @PostMapping("/reset-password")
@@ -122,9 +126,10 @@ public ResponseEntity<?> forgotPassword(@RequestBody String email) {
 
         return ResponseEntity.ok("Password reset successful");
     }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         return ResponseEntity.ok("Logout successful");
     }
-}
 
+}
