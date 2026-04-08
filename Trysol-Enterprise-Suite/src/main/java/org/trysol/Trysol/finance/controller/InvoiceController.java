@@ -11,6 +11,7 @@ import org.trysol.Trysol.finance.service.InvoiceService;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/invoice")
@@ -23,6 +24,15 @@ public class InvoiceController {
         service.saveInvoice(invoice);
         service.appendInvoiceToExcel(invoice); // append to Excel
         return ResponseEntity.ok("Invoice saved and Excel updated!");
+    }
+    @GetMapping("/all")
+    public ResponseEntity<List<Invoice>> getAllInvoices() {
+        return ResponseEntity.ok(service.getAllInvoices());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Invoice> getInvoiceById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getInvoiceById(id));
     }
     @GetMapping("/download")
     public ResponseEntity<InputStreamResource> downloadExcel() throws IOException {
@@ -39,7 +49,6 @@ public class InvoiceController {
             @PathVariable("invoiceNo") String invoiceNo,
             @RequestBody Invoice invoice) {
         boolean updated = service.updateInvoiceInExcel(invoiceNo, invoice);
-
         if (updated) return ResponseEntity.ok("Invoice updated!");
         else return ResponseEntity.status(404).body("Invoice not found");
     }
@@ -52,37 +61,8 @@ public class InvoiceController {
 
     }
 
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    public ResponseEntity<InputStreamResource> downloadExcel() throws IOException {
-//
-//        List<Invoice> invoices = service.getAllInvoices();
-//        ByteArrayInputStream in = service.generateExcel(invoices);
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.add("Content-Disposition", "attachment; filename=invoice.xlsx");
-//
-//        return ResponseEntity.ok()
-//                .headers(headers)
-//                .body(new InputStreamResource(in));
 
 
 

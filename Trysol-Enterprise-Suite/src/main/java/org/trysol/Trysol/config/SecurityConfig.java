@@ -1,10 +1,12 @@
 package org.trysol.Trysol.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,6 +16,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.trysol.Trysol.Auth.Repository.UserRepository;
+import org.trysol.Trysol.Auth.service.CustomAuthenticationProvider;
 import org.trysol.Trysol.Auth.service.CustomUserDetailService;
 import org.trysol.Trysol.security.JwtFilter;
 
@@ -22,20 +26,27 @@ import org.trysol.Trysol.security.JwtFilter;
 
     public class SecurityConfig {
 
-        @Autowired
-        private final CustomUserDetailService customUserDetailService;
+        private final  CustomUserDetailService customUserDetailService;
+        private final JwtFilter jwtFilter;
 
-        @Autowired
-        private JwtFilter jwtFilter;
-
-
-
-        public SecurityConfig(CustomUserDetailService customUserDetailService) {
+        public SecurityConfig(CustomUserDetailService customUserDetailService, JwtFilter jwtFilter) {
             this.customUserDetailService = customUserDetailService;
-        }
+            this.jwtFilter=jwtFilter;
+}
 
         @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        public CustomAuthenticationProvider customAuthenticationProvider(
+                UserRepository userRepository,
+                PasswordEncoder passwordEncoder) {
+
+            return new CustomAuthenticationProvider(userRepository, passwordEncoder);
+        }
+
+
+
+
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http,CustomAuthenticationProvider customAuthenticationProvider) throws Exception {
 
             http
                     .csrf(csrf -> csrf.disable())
@@ -60,18 +71,19 @@ import org.trysol.Trysol.security.JwtFilter;
                             .requestMatchers("/api/manager/**").hasRole("MANAGER")
                             .anyRequest().authenticated()
                     )
-                    .userDetailsService(customUserDetailService);
+                    //.userDetailsService(customUserDetailService);
+                        .authenticationProvider(customAuthenticationProvider);
             http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
             return http.build();
         }
         @Bean
         public PasswordEncoder passwordEncoder() {
             return new BCryptPasswordEncoder();
         }
+
+
         @Bean
-        public AuthenticationManager authenticationManager(
-                AuthenticationConfiguration config) throws Exception {
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
             return config.getAuthenticationManager();
 
 

@@ -1,4 +1,4 @@
-package org.trysol.Trysol.Auth.Dto;
+package org.trysol.Trysol.Auth.Dto.request;
 
 import lombok.Data;
 

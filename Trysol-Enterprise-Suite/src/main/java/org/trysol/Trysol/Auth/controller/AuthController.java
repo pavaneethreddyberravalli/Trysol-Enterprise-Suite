@@ -3,6 +3,7 @@ package org.trysol.Trysol.Auth.controller;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,7 +11,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.trysol.Trysol.Auth.Dto.*;
+import org.trysol.Trysol.Auth.Dto.request.ForgotPassword;
+import org.trysol.Trysol.Auth.Dto.request.LoginRequest;
+import org.trysol.Trysol.Auth.Dto.request.ResetPassword;
+import org.trysol.Trysol.Auth.Dto.request.UserRequest;
+import org.trysol.Trysol.Auth.Dto.response.AuthResponse;
 import org.trysol.Trysol.Auth.Repository.UserRepository;
 import org.trysol.Trysol.Auth.entity.User;
 import org.trysol.Trysol.Auth.exception.ApiException;
@@ -40,32 +45,75 @@ public class AuthController {
 
 
 
+//    @PostMapping("/login")
+//    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+//
+//        Authentication auth = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(
+//                        request.getUsernameOrEmail(),
+//                        request.getPassword()
+//                )
+//        );
+//        SecurityContextHolder.getContext().setAuthentication(auth);
+//        //String token = jwtUtil.generateToken(request.getUsernameOrEmail());
+//        User user = userRepository.findByUsernameOrEmail(
+//                request.getUsernameOrEmail(),
+//                request.getUsernameOrEmail()
+//        ).orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        // Generate token including role
+//        String roleName = (user.getRole() != null) ? user.getRole().getName() : "ROLE_USER";
+//        String token = jwtUtil.generateToken(
+//                user.getUsername(),
+//                roleName
+//        );
+//        return ResponseEntity.ok(new AuthResponse(token, "Bearer"));
+//    }
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsernameOrEmail(),
-                        request.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        //String token = jwtUtil.generateToken(request.getUsernameOrEmail());
-        User user = userRepository.findByUsernameOrEmail(
-                request.getUsernameOrEmail(),
-                request.getUsernameOrEmail()
-        ).orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            // Attempt authentication
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsernameOrEmail(),
+                            request.getPassword()
+                    )
+            );
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // Generate token including role
-        // Generate token including role
-        String roleName = (user.getRole() != null) ? user.getRole().getName() : "ROLE_USER";
-        String token = jwtUtil.generateToken(
-                user.getUsername(),
-                roleName
-        );
-//        String username = auth.getName();
-//        String token = jwtUtil.generateToken(username);
-        return ResponseEntity.ok(new AuthResponse(token, "Bearer"));
+            // Fetch user details
+            User user = userRepository.findByUsernameOrEmail(
+                            request.getUsernameOrEmail(),
+                            request.getUsernameOrEmail()
+                    )
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Determine role
+            String roleName = (user.getRole() != null) ? user.getRole().getName() : "ROLE_USER";
+
+            // Generate JWT token
+            String token = jwtUtil.generateToken(user.getUsername(), roleName);
+
+            return ResponseEntity.ok(new AuthResponse(token, "Bearer"));
+
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            // Password mismatch
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid password"));
+
+        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException e) {
+            // Username/email not found
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid username or email"));
+
+        } catch (RuntimeException e) {
+            // Any other errors
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/signup")
@@ -73,25 +121,12 @@ public class AuthController {
         return ResponseEntity.ok(userService.createUser(request));
     }
 
-
-    //    @PostMapping("/forgot-password")
-//    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new ApiException("User not found"));
-//
-//        String token = UUID.randomUUID().toString();
-//        user.setResetToken(token);
-//        user.setTokenExpiry(LocalDateTime.now().plusMinutes(30));
-//        userRepository.save(user);
-//        String resetLink = "http://localhost:5173/reset-password?token=" + token;
-//        return ResponseEntity.ok(Map.of("resetLink", resetLink));
-//    }
     @Transactional
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPassword request) {
 
-        String email = request.getEmail(); // get email from DTO
-        User user = userRepository.findByEmail(email)
+        String email = request.getEmail().trim(); // get email from DTO
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ApiException("User not found"));
 
         String token = UUID.randomUUID().toString();
@@ -101,8 +136,8 @@ public class AuthController {
         userRepository.saveAndFlush(user);
 
         return ResponseEntity.ok(Map.of(
-                "message", "Reset link generated",
-                "token", token
+                "message", "Reset link generated"
+
         ));
     }
 

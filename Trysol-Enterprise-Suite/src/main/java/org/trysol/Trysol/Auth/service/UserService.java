@@ -1,10 +1,9 @@
 package org.trysol.Trysol.Auth.service;
 
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.trysol.Trysol.Auth.Dto.UserRequest;
+import org.trysol.Trysol.Auth.Dto.request.UserRequest;
 import org.trysol.Trysol.Auth.Repository.RoleRepository;
 import org.trysol.Trysol.Auth.Repository.UserRepository;
 import org.trysol.Trysol.Auth.entity.Role;

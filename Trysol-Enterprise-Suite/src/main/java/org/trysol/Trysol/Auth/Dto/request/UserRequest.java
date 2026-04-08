@@ -1,4 +1,4 @@
-package org.trysol.Trysol.Auth.Dto;
+package org.trysol.Trysol.Auth.Dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -16,9 +16,9 @@ public class UserRequest {
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
             message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
     )
-
     private String password;
     private String email;
     private String roleName;
     private String confirmPassword;
 }
+

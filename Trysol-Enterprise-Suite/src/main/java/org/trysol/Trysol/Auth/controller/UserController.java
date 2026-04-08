@@ -3,7 +3,7 @@ package org.trysol.Trysol.Auth.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.trysol.Trysol.Auth.Dto.UserRequest;
+import org.trysol.Trysol.Auth.Dto.request.UserRequest;
 import org.trysol.Trysol.Auth.service.UserService;
 
 @RestController

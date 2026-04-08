@@ -14,9 +14,6 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-//    private final String SECRET = "mySuperSecretKeyForHRMSProject123456";
-//    private final long EXPIRATION = 1000 * 60 * 60;
-
 
     @Value("${spring.jwt.secret}")
     private String SECRET;

@@ -15,23 +15,21 @@
 
 ---
 
-## 🖼️ Demo (Add screenshots here)
-
-> 📌 Add these for a strong GitHub profile:
-
 ## 🖼️ Demo Screenshots
 
 ### 🔹 Swagger UI
 ![Swagger UI](docs/images/swagger.png)
+![Swagger UI](docs/images/swagger2.png)
+![Swagger UI](docs/images/swagger3.png)
 
 ### 🔹 Login API Response
 ![Login](docs/images/login.png)
 
 ### 🔹 Finance Excel Output
-![Finance Excel](docs/images/finance-excel.png)
+![Finance Excel](docs/images/invoice.png)
 
 ### 🔹 Invoice Excel
-![Invoice Excel](docs/images/invoice-excel.png)
+![Invoice Excel](docs/images/invoice.png)
 
 
 ## 🏗️ Architecture
@@ -47,8 +45,17 @@ Client (React/Postman)
         ↓
      Database (MySQL)
 
+
 Security Flow:
-JWT → Filter → Validate → Set Authentication → Role Check
+         JWT 
+          ↓
+       Filter 
+          ↓
+       Validate  
+          ↓
+       Set Authentication 
+            ↓
+       Role Check
 ```
 
 ---
@@ -106,7 +113,7 @@ JWT → Filter → Validate → Set Authentication → Role Check
 ## 📡 API Showcase
 
 ### 🔑 Login
-
+       
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
  -H "Content-Type: application/json" \
@@ -127,7 +134,7 @@ curl -X POST http://localhost:8080/api/finance/create \
 POST /api/invoice/create-update
 ```
 
----
+--- 
 
 ## 🔒 Role Access Matrix
 
@@ -155,21 +162,27 @@ cd trysol-enterprise-suite
 
 ### 2. Configure
 
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/your_db
-spring.datasource.username=root
-spring.datasource.password=your_password
+```YML
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/your_db
+    username: your_username
+    password: your_password
 
-spring.jwt.secret=your_secret_key
-spring.jwt.expiration=3600000
+  jwt:
+    secret: your_secret_key
+    expiration: 3600000
+
+  mail:
+    username: your_email@gmail.com
+    password: your_app_password
+    
+    
+    
+
+
 ```
-
-### 3. Run
-
-```bash
-mvn spring-boot:run
-```
-
+      
 ---
  ## Swagger
 http://localhost:8081/swagger-ui/index.html
@@ -204,4 +217,4 @@ http://localhost:8081/swagger-ui/index.html
 **Pavaneeth Reddy**
 Java Full Stack Developer
 
----
+---   
